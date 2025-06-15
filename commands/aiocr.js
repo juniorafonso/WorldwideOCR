@@ -27,7 +27,19 @@ module.exports = {
         try {
             console.log(`[AI OCR] Processando imagem com Google Cloud Vision: ${imageAttachment.url}`);
 
-            const [result] = await visionClient.textDetection(imageAttachment.url);
+            // Dica de idioma focada em script latino (usando Inglês como principal)
+            const expectedLanguages = ['en']; 
+
+            const request = {
+                image: {
+                    source: { imageUri: imageAttachment.url }
+                },
+                imageContext: {
+                    languageHints: expectedLanguages
+                }
+            };
+
+            const [result] = await visionClient.textDetection(request);
             const detections = result.textAnnotations;
 
             let extractedTextFromAI = "";
@@ -45,7 +57,8 @@ module.exports = {
 
             const lines = extractedTextFromAI.split('\n');
             const potentialNames = [];
-            const nameRegex = /[a-zA-Z0-9_-]+/g;
+            // Regex atualizada para incluir letras Unicode (incluindo cirílico)
+            const nameRegex = /[\p{L}\p{N}_-]+/gu; // \p{L} para letras, \p{N} para números, _ e -
 
             for (const line of lines) {
                 const wordsInLine = line.match(nameRegex);
@@ -91,7 +104,7 @@ module.exports = {
                 "buy", "sell", "trade", "quest", "quests", "journal", "log",
                 "completed", "active", "failed", "rewards", "objectives",
                 "description", "location", "npc", "monster", "boss", "enemy",
-                "enemies", "allies", "neutral", "faction", "reputation",
+                "enemies", "allies", "neutral", "faction", "reputation","Out Of Zone"
             ];
 
             const finalAiOcrNames = initialAiOcrNames.filter(name => {
